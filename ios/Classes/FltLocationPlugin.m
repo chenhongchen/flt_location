@@ -104,9 +104,9 @@
     NSLog(@"latitude = %lf longtude = %lf",coordinate.latitude,coordinate.longitude);
     
     if (CLLocationCoordinate2DIsValid(coordinate)) {
-        NSString *lati = [NSString stringWithFormat:@"%@", @(coordinate.latitude)];
         NSString *longi = [NSString stringWithFormat:@"%@", @(coordinate.longitude)];
-        _curCoordinate = @[lati, longi];
+        NSString *lati = [NSString stringWithFormat:@"%@", @(coordinate.latitude)];
+        _curCoordinate = @[longi, lati];
     }
     
     if ([self.curMethdName isEqualToString:@"getCurLocations"]) {
@@ -164,9 +164,9 @@
         dictM[@"subThoroughfare"] = placemark.subThoroughfare;
         dictM[@"locality"] = placemark.locality;
         if (CLLocationCoordinate2DIsValid(placemark.location.coordinate)) {
-            NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];
             NSString *longi = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.longitude)];
-            dictM[@"coordinate"] = @[lati, longi];
+            NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];
+            dictM[@"coordinate"] = @[longi, lati];
         }
         [placeItemsM insertObject:dictM atIndex:0];
     }
@@ -184,9 +184,9 @@
         dictM[@"subThoroughfare"] = placemark.subThoroughfare;
         dictM[@"locality"] = placemark.locality;
         if (CLLocationCoordinate2DIsValid(placemark.location.coordinate)) {
-            NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];
             NSString *longi = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.longitude)];
-            dictM[@"coordinate"] = @[lati, longi];
+            NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];
+            dictM[@"coordinate"] = @[longi, lati];
         }
         BOOL isRepeat = NO;
         for (NSDictionary *dict in self.placeItems) {
