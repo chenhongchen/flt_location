@@ -163,6 +163,8 @@
         dictM[@"thoroughfare"] = placemark.thoroughfare;
         dictM[@"subThoroughfare"] = placemark.subThoroughfare;
         dictM[@"locality"] = placemark.locality;
+        dictM[@"countryCode"] = placemark.ISOcountryCode.uppercaseString;
+        dictM[@"province"] = placemark.administrativeArea;
         if (CLLocationCoordinate2DIsValid(placemark.location.coordinate)) {
             NSString *longi = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.longitude)];
             NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];
@@ -183,6 +185,8 @@
         dictM[@"thoroughfare"] = placemark.thoroughfare;
         dictM[@"subThoroughfare"] = placemark.subThoroughfare;
         dictM[@"locality"] = placemark.locality;
+        dictM[@"countryCode"] = placemark.ISOcountryCode.uppercaseString;
+        dictM[@"province"] = placemark.administrativeArea;
         if (CLLocationCoordinate2DIsValid(placemark.location.coordinate)) {
             NSString *longi = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.longitude)];
             NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];
