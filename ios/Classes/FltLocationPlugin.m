@@ -13,6 +13,7 @@
 @property (nonatomic, copy) NSString *curMethdName;
 @property (nonatomic, copy) NSString *searchKey;
 @property (nonatomic, strong) NSArray<NSString*> *curCoordinate;
+@property (nonatomic, strong) NSDictionary *curLocation;
 @end
 
 @implementation FltLocationPlugin
@@ -114,7 +115,8 @@
         CLGeocoder *gecoder = [[CLGeocoder alloc] init];
         __weak typeof(self) weakSelf = self;
         [gecoder reverseGeocodeLocation:_location completionHandler:^(NSArray *placemarks, NSError *error) {
-            [weakSelf getCurrentPlaces:placemarks];
+            weakSelf.placeItems = [weakSelf getCurrentPlaces:placemarks];
+            weakSelf.curLocation = weakSelf.placeItems.firstObject;
             [weakSelf getAroundInfoMationWithCoordinate:coordinate withKey:@"food"];
         }];
     }
@@ -154,7 +156,7 @@
     }];
 }
 
-- (void)getCurrentPlaces:(NSArray <CLPlacemark *> *)places
+- (NSArray *)getCurrentPlaces:(NSArray <CLPlacemark *> *)places
 {
     NSMutableArray *placeItemsM = [NSMutableArray array];
     for (CLPlacemark *placemark in places) {
@@ -172,9 +174,9 @@
             NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];
             dictM[@"coordinate"] = @[longi, lati];
         }
-        [placeItemsM insertObject:dictM atIndex:0];
+        [placeItemsM addObject:dictM];
     }
-    _placeItems = placeItemsM;
+    return placeItemsM;
 }
 
 //{
@@ -220,10 +222,16 @@
         [placeItemsM addObject:dictM];
     }
     self.placeItems = placeItemsM;
+    
     if (self.result) {
         NSMutableDictionary *dictM = [NSMutableDictionary dictionary];
-        dictM[@"value"] = @{@"locations":_placeItems,@"coordinate":_curCoordinate};
-        self.result(dictM);
+        if ([_placeItems isKindOfClass:[NSArray class]]) {
+            dictM[@"locations"] = _placeItems;
+        }
+        if ([_curLocation isKindOfClass:[NSDictionary class]]) {
+            dictM[@"curLocation"] = _curLocation;
+        }
+        self.result(@{@"value" : dictM});
     }
 }
 

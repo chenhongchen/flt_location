@@ -9,8 +9,8 @@ class FltLocation {
   /*
   * 当前位置及周边附近
   * return:
-  * 成功： {'value' : {'locations':[{}], 'coordinate':['longitude','latitude']}}
-  * 'locations':{'name':'xx','countryCode':'xx','country':'xx',
+  * 成功： {'value' : {'locations':[location], 'curLocation':'{location}'}}
+  * 'location':{'name':'xx','countryCode':'xx','country':'xx',
   *             'province':'xx','locality':'xx','subLocality':'xx','thoroughfare':'xx',
   *             'subThoroughfare':'xx','coordinate':['longitude','latitude']}
   * 失败：{'err':'xx'}
@@ -24,8 +24,8 @@ class FltLocation {
   * 搜索周边位置
   * argsMap: 要搜索的字符串，格式{'key':'xxxx'}
   * return:
-  * 成功： {'value' : {'locations':[{}], 'coordinate':['longitude','latitude']}}
-  * 'locations':{'name':'xx','countryCode':'xx','country':'xx',
+  * 成功： {'value' : {'locations':[location]}}
+  * 'location':{'name':'xx','countryCode':'xx','country':'xx',
   *             'province':'xx','locality':'xx','subLocality':'xx','thoroughfare':'xx',
   *             'subThoroughfare':'xx','coordinate':['longitude','latitude']}
   * 失败：{'err':'xx'}
