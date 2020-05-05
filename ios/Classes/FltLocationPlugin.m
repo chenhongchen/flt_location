@@ -159,12 +159,14 @@
     NSMutableArray *placeItemsM = [NSMutableArray array];
     for (CLPlacemark *placemark in places) {
         NSMutableDictionary *dictM = [NSMutableDictionary dictionary];
-        dictM[@"name"] = placemark.name;
-        dictM[@"thoroughfare"] = placemark.thoroughfare;
-        dictM[@"subThoroughfare"] = placemark.subThoroughfare;
-        dictM[@"locality"] = placemark.locality;
-        dictM[@"countryCode"] = placemark.ISOcountryCode.uppercaseString;
-        dictM[@"province"] = placemark.administrativeArea;
+        dictM[@"name"] = placemark.name; // 地点
+        dictM[@"countryCode"] = placemark.ISOcountryCode.uppercaseString; // 国家码
+        dictM[@"country"] = placemark.country; // 国家
+        dictM[@"province"] = placemark.administrativeArea; // 省
+        dictM[@"locality"] = placemark.locality; // 城市
+        dictM[@"subLocality"] = placemark.subLocality; // 区
+        dictM[@"thoroughfare"] = placemark.thoroughfare; // 街道
+        dictM[@"subThoroughfare"] = placemark.subThoroughfare; // 门牌号
         if (CLLocationCoordinate2DIsValid(placemark.location.coordinate)) {
             NSString *longi = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.longitude)];
             NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];
@@ -175,18 +177,31 @@
     _placeItems = placeItemsM;
 }
 
+//{
+//    "locality" : "Nanchang",
+//    "country" : "China",
+//    "subLocality" : "Qingyunpu",
+//    "subThoroughfare" : "No.135",
+//    "countryCode" : "CN",
+//    "thoroughfare" : "Hongdu South Avenue",
+//    "name" : "No.135 Hongdu South Avenue",
+//    "province" : "Jiangxi"
+//}
+
 - (void)getAroundPlaces:(NSArray <MKMapItem *> *)places
 {
     NSMutableArray *placeItemsM = [NSMutableArray arrayWithArray:self.placeItems];
     for (MKMapItem *item in places) {
         MKPlacemark * placemark = item.placemark;
         NSMutableDictionary *dictM = [NSMutableDictionary dictionary];
-        dictM[@"name"] = placemark.name;
-        dictM[@"thoroughfare"] = placemark.thoroughfare;
-        dictM[@"subThoroughfare"] = placemark.subThoroughfare;
-        dictM[@"locality"] = placemark.locality;
-        dictM[@"countryCode"] = placemark.ISOcountryCode.uppercaseString;
-        dictM[@"province"] = placemark.administrativeArea;
+        dictM[@"name"] = placemark.name; // 地点
+        dictM[@"countryCode"] = placemark.ISOcountryCode.uppercaseString; // 国家码
+        dictM[@"country"] = placemark.country; // 国家
+        dictM[@"province"] = placemark.administrativeArea; // 省
+        dictM[@"locality"] = placemark.locality; // 城市
+        dictM[@"subLocality"] = placemark.subLocality; // 区
+        dictM[@"thoroughfare"] = placemark.thoroughfare; // 街道
+        dictM[@"subThoroughfare"] = placemark.subThoroughfare; // 门牌号
         if (CLLocationCoordinate2DIsValid(placemark.location.coordinate)) {
             NSString *longi = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.longitude)];
             NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];
