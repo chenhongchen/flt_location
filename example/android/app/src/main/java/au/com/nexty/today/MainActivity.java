@@ -1,4 +1,4 @@
-package com.mt.flt_location_example;
+package au.com.nexty.today;
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity;
