@@ -30,6 +30,7 @@
     NSDictionary *argsMap = call.arguments;
     self.curMethdName = call.method;
     self.userDefaultLanguages = [[NSUserDefaults standardUserDefaults] objectForKey:@"AppleLanguages"];
+    [[NSUserDefaults standardUserDefaults] setObject:[NSArray arrayWithObjects:@"en", nil] forKey:@"AppleLanguages"];
     if ([@"getCurLocations" isEqualToString:call.method]) {
         [self getCurLocations:result];
     }
