@@ -14,6 +14,7 @@
 @property (nonatomic, copy) NSString *searchKey;
 @property (nonatomic, strong) NSArray<NSString*> *curCoordinate;
 @property (nonatomic, strong) NSDictionary *curLocation;
+@property (nonatomic, strong) NSArray *userDefaultLanguages; // 系统默认的语言
 @end
 
 @implementation FltLocationPlugin
@@ -28,6 +29,7 @@
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
     NSDictionary *argsMap = call.arguments;
     self.curMethdName = call.method;
+    self.userDefaultLanguages = [[NSUserDefaults standardUserDefaults] objectForKey:@"AppleLanguages"];
     if ([@"getCurLocations" isEqualToString:call.method]) {
         [self getCurLocations:result];
     }
@@ -118,6 +120,7 @@
             weakSelf.placeItems = [weakSelf getCurrentPlaces:placemarks];
             weakSelf.curLocation = weakSelf.placeItems.firstObject;
             [weakSelf getAroundInfoMationWithCoordinate:coordinate withKey:@"food"];
+            [[NSUserDefaults standardUserDefaults] setObject: weakSelf.userDefaultLanguages forKey:@"AppleLanguages"];
         }];
     }
     else if ([self.curMethdName isEqualToString:@"searchLocation"]){
@@ -133,6 +136,13 @@
     }
 }
 
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
+    [[NSUserDefaults standardUserDefaults] setObject: self.userDefaultLanguages forKey:@"AppleLanguages"];
+    if (self.result) {
+        self.result(@{});
+    }
+}
+
 - (void)getAroundInfoMationWithCoordinate:(CLLocationCoordinate2D)coordinate withKey:(NSString *)key
 {
     MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(coordinate, DEFAULTSPAN, DEFAULTSPAN);
@@ -142,6 +152,7 @@
     MKLocalSearch *localSearch = [[MKLocalSearch alloc] initWithRequest:request];
     __weak typeof(self) weakSelf = self;
     [localSearch startWithCompletionHandler:^(MKLocalSearchResponse *response, NSError *error){
+        [[NSUserDefaults standardUserDefaults] setObject: weakSelf.userDefaultLanguages forKey:@"AppleLanguages"];
         if (!error) {
             [weakSelf getAroundPlaces:response.mapItems];
         }else{
