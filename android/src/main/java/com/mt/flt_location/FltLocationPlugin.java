@@ -202,6 +202,10 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
     }
 
     private void getCurLocations(Result result) {
+        if(null==mActivity){
+            result.success(null);
+            return;
+        }
         if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION
                     , Manifest.permission.ACCESS_FINE_LOCATION}, 100000);
