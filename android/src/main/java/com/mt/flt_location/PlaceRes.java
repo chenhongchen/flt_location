@@ -3,6 +3,7 @@ package com.mt.flt_location;
 public class PlaceRes {
     private String name;
     private String thoroughfare;
+    private String placeId;
     private double[] coordinate;
 
     public String getName() {
@@ -27,5 +28,13 @@ public class PlaceRes {
 
     public void setCoordinate(double[] coordinate) {
         this.coordinate = coordinate;
+    }
+
+    public String getPlaceId() {
+        return placeId;
+    }
+
+    public void setPlaceId(String placeId) {
+        this.placeId = placeId;
     }
 }

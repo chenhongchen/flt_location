@@ -34,4 +34,8 @@ class FltLocation {
     Map locations = await _channel.invokeMethod('searchLocation', argsMap);
     return locations;
   }
+  static Future<Map> getPlaceDetail(Map argsMap) async {
+    Map locations = await _channel.invokeMethod('getplacedetail', argsMap);
+    return locations;
+  }
 }

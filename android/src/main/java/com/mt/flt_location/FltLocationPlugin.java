@@ -5,31 +5,30 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.location.Address;
-import android.location.Criteria;
 import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Bundle;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.AutocompletePrediction;
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.PlaceLikelihood;
+import com.google.android.libraries.places.api.model.RectangularBounds;
+import com.google.android.libraries.places.api.model.TypeFilter;
+import com.google.android.libraries.places.api.net.FetchPlaceRequest;
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
-import com.mt.flt_location.googleserver.Api;
-import com.mt.flt_location.googleserver.NearList;
-import com.mt.flt_location.googleserver.ServiceClient;
 
-import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
@@ -56,21 +55,12 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-
 /**
  * FltLocationPlugin
  */
 public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, ActivityAware {
-    private String googlePlaceKey;
+    private static String googlePlaceKey;
     private static Activity mActivity;
-
-    @Override
-    public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-        final MethodChannel channel = new MethodChannel(flutterPluginBinding.getFlutterEngine().getDartExecutor(), "flt_location/method");
-        channel.setMethodCallHandler(new FltLocationPlugin());
-
-    }
 
     // This static function is optional and equivalent to onAttachedToEngine. It supports the old
     // pre-Flutter-1.12 Android projects. You are encouraged to continue supporting
@@ -88,6 +78,13 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
     }
 
     @Override
+    public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+        final MethodChannel channel = new MethodChannel(flutterPluginBinding.getFlutterEngine().getDartExecutor(), "flt_location/method");
+        channel.setMethodCallHandler(new FltLocationPlugin());
+
+    }
+
+    @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         if (call.method.equals("getPlatformVersion")) {
             result.success("Android " + android.os.Build.VERSION.RELEASE);
@@ -97,90 +94,113 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
             Map arg = call.arguments();
             String keyWord = (String) arg.get("key");
             searchLocation(keyWord, result);
+        } else if (call.method.equals("getplacedetail")) {
+            Map arg = call.arguments();
+            String placeId = (String) arg.get("placeId");
+            getPlaceDetail(placeId, result);
         } else {
             result.notImplemented();
         }
     }
 
-    private void searchLocation(String keyWork, Result result) {
+    private void getPlaceDetail(String placeId, Result result) {
+
+        Flowable.create((FlowableOnSubscribe<Map>) emitter -> {
+            Configuration config = mActivity.getResources().getConfiguration();
+            Locale locale = new Locale("en"); // <---- your target language
+            Locale.setDefault(locale);
+            config.locale = locale;
+            mActivity.getResources().updateConfiguration(config,
+                    mActivity.getResources().getDisplayMetrics());
+            // Create a new Places client instance.
+            PlacesClient placesClient = Places.createClient(mActivity);
+            List<Place.Field> placeFields = Arrays.asList(
+                    Place.Field.ADDRESS,
+                    Place.Field.ID,
+                    Place.Field.LAT_LNG,
+                    Place.Field.NAME
+            );
+            FetchPlaceRequest request = FetchPlaceRequest.newInstance(placeId, placeFields);
+            placesClient.fetchPlace(request).addOnSuccessListener((response) -> {
+                Place responseplace = response.getPlace();
+                PlaceRes place = new PlaceRes();
+                place.setName(responseplace.getName());
+                place.setThoroughfare(responseplace.getAddress());
+                double[] latlng = {responseplace.getLatLng().latitude, responseplace.getLatLng().longitude};
+                place.setCoordinate(latlng);
+                emitter.onNext(getItem(place, null));
+            }).addOnFailureListener((exception) -> {
+                emitter.onError(exception);
+            });
+        }, BackpressureStrategy.LATEST)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(comSubscriber(result));
+    }
+
+    private void searchLocation(String keyWord, Result result) {
         if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION
                     , Manifest.permission.ACCESS_FINE_LOCATION}, 100000);
             result.success(null);
             return;
         }
-        gmsLocation(mActivity)
-                .flatMap((Function<Location, Publisher<Map>>) location -> {
-                    Map<String, Object> queryMap = new HashMap<>();
-                    queryMap.put("location", location.getLatitude() + "," + location.getLongitude());
-                    queryMap.put("radius", 5000);
-                    queryMap.put("keyword", keyWork);
-                    queryMap.put("key", googlePlaceKey);
-                    queryMap.put("language", "zh-CN");
-                    Flowable<NearList> nearListFlowable =
-                            ServiceClient.getClient().getRetrofit().create(Api.class)
-                                    .nearbysearch(queryMap).subscribeOn(Schedulers.io());
-                    Flowable<LocationRes> rxlocation =
-                            Flowable.just(location)
-                                    .map(location1 -> transformationLocation(mActivity,
-                                            new double[]{location1.getLatitude(), location1.getLongitude()}))
-                                    .subscribeOn(Schedulers.newThread());
-                    return Flowable.zip(nearListFlowable, rxlocation, (nearList, locationRes) -> {
-                        Map<String, Object> resMap = new HashMap<>();
-                        Map<String, Object> valuesMap = new HashMap<>();
+
+        Flowable.create((FlowableOnSubscribe<List<PlaceRes>>) emitter -> {
+            RectangularBounds bounds = RectangularBounds.newInstance(
+                    new LatLng(-43.577054, 112.372762), //dummy lat/lng
+                    new LatLng(-11.914561, 154.239446));
+            Configuration config = mActivity.getResources().getConfiguration();
+            Locale locale = new Locale("en"); // <---- your target language
+            Locale.setDefault(locale);
+            config.locale = locale;
+            mActivity.getResources().updateConfiguration(config,
+                    mActivity.getResources().getDisplayMetrics());
+            // Create a new Places client instance.
+            PlacesClient placesClient = Places.createClient(mActivity);
+            AutocompleteSessionToken token = AutocompleteSessionToken.newInstance();
+            FindAutocompletePredictionsRequest request = FindAutocompletePredictionsRequest.builder()
+                    .setLocationRestriction(bounds)
+                    //.setCountry("us")
+                    .setTypeFilter(TypeFilter.ADDRESS)
+                    .setSessionToken(token)
+                    .setQuery(keyWord)
+                    .build();
+            placesClient.findAutocompletePredictions(request).addOnSuccessListener(response -> {
+                List<PlaceRes> placeResList = new ArrayList<>();
+                for (AutocompletePrediction prediction : response.getAutocompletePredictions()) {
+                    PlaceRes place = new PlaceRes();
+                    place.setName(prediction.getPrimaryText(null).toString());
+                    place.setThoroughfare(prediction.getSecondaryText(null).toString());
+                    place.setPlaceId(prediction.getPlaceId());
+                    placeResList.add(place);
+                }
+                emitter.onNext(placeResList);
+                emitter.onComplete();
+                //mSearchResult.setText(String.valueOf(mResult));
+            }).addOnFailureListener((exception) -> {
+                emitter.onError(exception);
+            });
+        }, BackpressureStrategy.LATEST)
+                .map((Function<List<PlaceRes>, Map>) placeRes -> {
+                    Map<String, Object> resMap = new HashMap<>();
+                    Map<String, Object> valuesMap = new HashMap<>();
+                    LocationRes locationRes = null;
+                    if (placeRes.size() > 0) {
                         List<Map<String, Object>> locations = new ArrayList<>();
-                        for (NearList.ResultsBean resultsBean : nearList.getResults()) {
-                            locations.add(getItem(changeNearby(resultsBean), locationRes));
+                        for (PlaceRes place : placeRes) {
+                            locations.add(getItem(place, locationRes));
                         }
-                        valuesMap.put("locations:", locations);
-                        resMap.put("value", valuesMap);
-                        return resMap;
-                    });
+                        valuesMap.put("locations", locations);
+                    }
+                    resMap.put("value", valuesMap);
+                    return resMap;
                 })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(comSubscriber(result));
     }
 
-    private Flowable<Location> gmsLocation(Context context) {
-        return Flowable.create(emitter -> {
-            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-            Criteria criteria = new Criteria();
-            criteria.setAccuracy(Criteria.ACCURACY_FINE); //定位精度: 最高
-            criteria.setAltitudeRequired(false); //海拔信息：不需要
-            criteria.setBearingRequired(false); //方位信息: 不需要
-            criteria.setCostAllowed(true);  //是否允许付费
-            criteria.setPowerRequirement(Criteria.POWER_LOW); //耗电量: 低功耗
-
-            String provider = locationManager.getBestProvider(criteria, true); //获取定位器类别
-            if (provider == null) {
-                return;
-            }
-            LocationListener ll = new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    emitter.onNext(location);
-                    emitter.onComplete();
-                }
-
-                @Override
-                public void onStatusChanged(String provider, int status, Bundle extras) {
-
-                }
-
-                @Override
-                public void onProviderEnabled(String provider) {
-
-                }
-
-                @Override
-                public void onProviderDisabled(String provider) {
-
-                }
-            };
-            locationManager.requestSingleUpdate(provider, ll, context.getMainLooper());
-        }, BackpressureStrategy.LATEST);
-    }
 
     private LocationRes transformationLocation(Context context, double[] latlng) throws IOException {
         Geocoder geoCoder = new Geocoder(context, Locale.CHINESE);
@@ -202,7 +222,7 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
     }
 
     private void getCurLocations(Result result) {
-        if(null==mActivity){
+        if (null == mActivity) {
             result.success(null);
             return;
         }
@@ -219,6 +239,12 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
                     Place.Field.LAT_LNG,
                     Place.Field.NAME
             );
+            Configuration config = mActivity.getResources().getConfiguration();
+            Locale locale = new Locale("en"); // <---- your target language
+            Locale.setDefault(locale);
+            config.locale = locale;
+            mActivity.getResources().updateConfiguration(config,
+                    mActivity.getResources().getDisplayMetrics());
             PlacesClient placesClient = Places.createClient(mActivity);
             FindCurrentPlaceRequest findCurrentPlaceRequest =
                     FindCurrentPlaceRequest.newInstance(placeFields);
@@ -259,7 +285,7 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
                         for (PlaceRes place : placeRes) {
                             locations.add(getItem(place, locationRes));
                         }
-                        valuesMap.put("locations:", locations);
+                        valuesMap.put("locations", locations);
                     }
                     resMap.put("value", valuesMap);
                     return resMap;
@@ -293,17 +319,11 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
         };
     }
 
-    private PlaceRes changeNearby(NearList.ResultsBean resultsBean) {
-        PlaceRes placeRes = new PlaceRes();
-        placeRes.setName(resultsBean.getName());
-        placeRes.setThoroughfare(resultsBean.getVicinity());
-        placeRes.setCoordinate(new double[]{resultsBean.getGeometry().getLocation().getLat(), resultsBean.getGeometry().getLocation().getLng()});
-        return placeRes;
-    }
 
     private Map<String, Object> getItem(PlaceRes place, LocationRes locationRes) {
         Map<String, Object> item = new HashMap<>();
         item.put("name", place.getName());
+        item.put("placeid", place.getPlaceId());
         item.put("thoroughfare", place.getThoroughfare());
         item.put("coordinate", place.getCoordinate());
         if (null != locationRes) {
