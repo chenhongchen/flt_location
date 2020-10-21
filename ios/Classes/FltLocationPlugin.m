@@ -79,9 +79,9 @@
         _placeItems = @[];
         _searchKey = @"";
         _curMethdName = @"";
-        if ([self.locManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
-            [self.locManager requestWhenInUseAuthorization];
-        }
+//        if ([self.locManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
+//            [self.locManager requestWhenInUseAuthorization];
+//        }
     }
     return self;
 }
