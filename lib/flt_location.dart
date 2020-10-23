@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class FltLocation {
   static const MethodChannel _channel =
@@ -16,6 +17,15 @@ class FltLocation {
   * 失败：{'err':'xx'}
   * */
   static Future<Map> get curLocations async {
+    var locationAlways = await PermissionHandler()
+        .checkPermissionStatus(PermissionGroup.locationAlways);
+    var locationWhenInUse = await PermissionHandler()
+        .checkPermissionStatus(PermissionGroup.locationWhenInUse);
+    if (locationAlways != PermissionStatus.granted &&
+        locationWhenInUse != PermissionStatus.granted) {
+      return null;
+    }
+
     Map locations = await _channel.invokeMethod('getCurLocations');
     return locations;
   }
@@ -31,9 +41,19 @@ class FltLocation {
   * 失败：{'err':'xx'}
   * */
   static Future<Map> searchLocation(Map argsMap) async {
+    var locationAlways = await PermissionHandler()
+        .checkPermissionStatus(PermissionGroup.locationAlways);
+    var locationWhenInUse = await PermissionHandler()
+        .checkPermissionStatus(PermissionGroup.locationWhenInUse);
+    if (locationAlways != PermissionStatus.granted &&
+        locationWhenInUse != PermissionStatus.granted) {
+      return null;
+    }
+
     Map locations = await _channel.invokeMethod('searchLocation', argsMap);
     return locations;
   }
+
   static Future<Map> getPlaceDetail(Map argsMap) async {
     Map locations = await _channel.invokeMethod('getplacedetail', argsMap);
     return locations;
