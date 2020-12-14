@@ -126,7 +126,7 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
                 PlaceRes place = new PlaceRes();
                 place.setName(responseplace.getName());
                 place.setThoroughfare(responseplace.getAddress());
-                double[] latlng = {responseplace.getLatLng().latitude, responseplace.getLatLng().longitude};
+                double[] latlng = {responseplace.getLatLng().longitude,responseplace.getLatLng().latitude};
                 place.setCoordinate(latlng);
                 emitter.onNext(getItem(place, null));
             }).addOnFailureListener((exception) -> {
@@ -257,7 +257,7 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
                         PlaceRes place = new PlaceRes();
                         place.setName(placeLikelihood.getPlace().getName());
                         place.setThoroughfare(placeLikelihood.getPlace().getAddress());
-                        double[] latlng = {placeLikelihood.getPlace().getLatLng().latitude, placeLikelihood.getPlace().getLatLng().longitude};
+                        double[] latlng = {placeLikelihood.getPlace().getLatLng().longitude,placeLikelihood.getPlace().getLatLng().latitude};
                         place.setCoordinate(latlng);
                         placeResList.add(place);
                     }
