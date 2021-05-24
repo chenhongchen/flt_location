@@ -39,6 +39,14 @@ class _MyAppState extends State<MyApp> {
                 _searchPosition();
               },
             ),
+            GestureDetector(
+              child: Center(
+                child: Text('获取定位'),
+              ),
+              onTap: () {
+                _getLocation();
+              },
+            )
           ],
         ),
       ),
@@ -52,6 +60,10 @@ class _MyAppState extends State<MyApp> {
 
   _searchPosition() async {
     var res = await FltLocation.searchLocation({'key': '大厦'});
+    debugPrint('_getCurPositions -- $res');
+  }
+  _getLocation() async {
+    var res = await FltLocation.getLocation;
     debugPrint('_getCurPositions -- $res');
   }
 }

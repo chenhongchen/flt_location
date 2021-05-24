@@ -7,7 +7,12 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -61,7 +66,7 @@ import io.reactivex.schedulers.Schedulers;
 public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, ActivityAware {
     private static String googlePlaceKey;
     private static Activity mActivity;
-
+    public static Location LOC = null;
     // This static function is optional and equivalent to onAttachedToEngine. It supports the old
     // pre-Flutter-1.12 Android projects. You are encouraged to continue supporting
     // plugin registration via this function while apps migrate to use the new Android APIs
@@ -90,7 +95,9 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
             result.success("Android " + android.os.Build.VERSION.RELEASE);
         } else if (call.method.equals("getCurLocations")) {
             getCurLocations(result);
-        } else if (call.method.equals("searchLocation")) {
+        } else if(call.method.equals("getLocation")){
+            getLocation(result);
+        }else if (call.method.equals("searchLocation")) {
             Map arg = call.arguments();
             String keyWord = (String) arg.get("key");
             searchLocation(keyWord, result);
@@ -203,7 +210,7 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
 
 
     private LocationRes transformationLocation(Context context, double[] latlng) throws IOException {
-        Geocoder geoCoder = new Geocoder(context, Locale.CHINESE);
+        Geocoder geoCoder = new Geocoder(context, Locale.ENGLISH);
         List<Address> addresses = geoCoder.getFromLocation(
                 latlng[0], latlng[1],
                 1);
@@ -220,7 +227,93 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
         }
         return location;
     }
+    private void getLocation(Result result) {
+        if (null == mActivity) {
+            result.success(null);
+            return;
+        }
+        if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION
+                    , Manifest.permission.ACCESS_FINE_LOCATION}, 100000);
+            result.success(null);
+            return;
+        }
+        getLocation(mActivity)
+                .map(location -> {
+                    if (null != LOC) {
+                        double latitude = LOC.getLatitude();
+                        double longitude = LOC.getLongitude();
+                        double[] latlng = {latitude, longitude};
+                        LocationRes locationRes=transformationLocation(mActivity, latlng);
+                        Map<String, Object> item = new HashMap<>();
+                        item.put("coordinate", latlng);
+                        if (null != locationRes) {
+                            item.put("locality", locationRes.getLocality());
+                            item.put("country", locationRes.getCountry());
+                            item.put("subLocality", locationRes.getSubLocality());
+                            item.put("subThoroughfare", locationRes.getSubThoroughfare());
+                            item.put("countryCode", locationRes.getCountryCode());
+                            item.put("province", locationRes.getProvince());
+                        }
+                        Map<String, Object> resMap = new HashMap<>();
+                        Map<String, Object> valuesMap = new HashMap<>();
+                        valuesMap.put("locations", item);
+                        resMap.put("value", valuesMap);
+                        return resMap;
+                    }else{
+                        return null;
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(comSubscriber(result));
+    }
+    public static Flowable<Location> getLocation(Context context) {
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE); //定位精度: 最高
+        criteria.setAltitudeRequired(false); //海拔信息：不需要
+        criteria.setBearingRequired(false); //方位信息: 不需要
+        criteria.setCostAllowed(true);  //是否允许付费
+        criteria.setPowerRequirement(Criteria.POWER_LOW); //耗电量: 低功耗
 
+        String provider = locationManager.getBestProvider(criteria, true); //获取定位器类别
+        if (provider == null) {
+
+            return Flowable.just(null==LOC?new Location(""):LOC);
+        }
+        LOC = locationManager.getLastKnownLocation(provider);
+        Flowable<Location> locationFlowable = Flowable.create(emitter -> {
+            LocationListener ll = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    if (location != null) {
+                        LOC = location;
+                    }
+                    emitter.onNext(location);
+                    emitter.onComplete();
+                }
+
+                @Override
+                public void onStatusChanged(String provider1, int status, Bundle extras) {
+
+                }
+
+                @Override
+                public void onProviderEnabled(String provider1) {
+
+                }
+
+                @Override
+                public void onProviderDisabled(String provider1) {
+
+                }
+            };
+            locationManager.requestSingleUpdate(provider, ll, context.getMainLooper());
+        }, BackpressureStrategy.LATEST);
+        return locationFlowable.subscribeOn(Schedulers.io());
+
+    }
     private void getCurLocations(Result result) {
         if (null == mActivity) {
             result.success(null);
