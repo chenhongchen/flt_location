@@ -37,6 +37,9 @@
     else if ([@"searchLocation" isEqualToString:call.method]) {
         [self searchLocation:argsMap result:result];
     }
+    else if ([@"getLocation" isEqualToString:call.method]) {
+        [self getCurLocations:result];
+    }
     else {
         result(FlutterMethodNotImplemented);
     }
@@ -113,14 +116,27 @@
         _curCoordinate = @[longi, lati];
     }
     
-    if ([self.curMethdName isEqualToString:@"getCurLocations"]) {
+    if ([self.curMethdName isEqualToString:@"getCurLocations"] || [self.curMethdName isEqualToString:@"getLocation"]) {
         // 地址的编码通过经纬度得到具体的地址
         CLGeocoder *gecoder = [[CLGeocoder alloc] init];
         __weak typeof(self) weakSelf = self;
         [gecoder reverseGeocodeLocation:_location completionHandler:^(NSArray *placemarks, NSError *error) {
             weakSelf.placeItems = [weakSelf getCurrentPlaces:placemarks];
             weakSelf.curLocation = weakSelf.placeItems.firstObject;
-            [weakSelf getAroundInfoMationWithCoordinate:coordinate withKey:@"food"];
+            // 获取当前位置
+            if ([weakSelf.curMethdName isEqualToString:@"getLocation"] ) {
+                if (weakSelf.result) {
+                    NSMutableDictionary *dictM = [NSMutableDictionary dictionary];
+                    if ([weakSelf.curLocation isKindOfClass:[NSDictionary class]]) {
+                        dictM[@"locations"] = weakSelf.curLocation;
+                    }
+                    weakSelf.result(@{@"value" : dictM});
+                }
+            }
+            // 获取当前位置和周边位置
+            else {
+                [weakSelf getAroundInfoMationWithCoordinate:coordinate withKey:@"food"];
+            }
             [[NSUserDefaults standardUserDefaults] setObject: weakSelf.userDefaultLanguages forKey:@"AppleLanguages"];
         }];
     }
@@ -157,14 +173,14 @@
         if (!error) {
             [weakSelf getAroundPlaces:response.mapItems];
         }else{
-            if (self.result) {
-                self.result(@{});
+            if (weakSelf.result) {
+                weakSelf.result(@{});
             }
             NSLog(@"Quest around Error:%@",error.localizedDescription);
         }
-        self.curMethdName = @"";
-        self.searchKey = @"";
-        self.placeItems = @[];
+        weakSelf.curMethdName = @"";
+        weakSelf.searchKey = @"";
+        weakSelf.placeItems = @[];
     }];
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flt_location/flt_location.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() => runApp(MyApp());
 
@@ -12,6 +13,10 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    try {
+      PermissionHandler()
+          .requestPermissions([PermissionGroup.locationWhenInUse]);
+    } catch (e) {}
   }
 
   @override
@@ -25,10 +30,18 @@ class _MyAppState extends State<MyApp> {
           children: <Widget>[
             GestureDetector(
               child: Center(
-                child: Text('获取当前位置列表'),
+                child: Text('获取当前位置及周边位置列表'),
               ),
               onTap: () {
                 _getCurPositions();
+              },
+            ),
+            GestureDetector(
+              child: Center(
+                child: Text('获取当前位置'),
+              ),
+              onTap: () {
+                _getLocation();
               },
             ),
             GestureDetector(
@@ -56,6 +69,11 @@ class _MyAppState extends State<MyApp> {
   _getCurPositions() async {
     var res = await FltLocation.curLocations;
     debugPrint('_getCurPositions -- $res');
+  }
+
+  _getLocation() async {
+    var res = await FltLocation.getLocation;
+    debugPrint('_getLocation -- $res');
   }
 
   _searchPosition() async {
