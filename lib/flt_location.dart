@@ -30,7 +30,7 @@ class FltLocation {
     return locations;
   }
 
-/*
+  /*
   * 获取当前位置
   * return:
   * 成功： {'value' : {'locations':location}
@@ -52,6 +52,7 @@ class FltLocation {
     Map locations = await _channel.invokeMethod('getLocation');
     return locations;
   }
+
   /*
   * 搜索周边位置
   * argsMap: 要搜索的字符串，格式{'key':'xxxx'}
