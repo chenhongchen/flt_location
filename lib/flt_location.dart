@@ -16,17 +16,15 @@ class FltLocation {
   *             'subThoroughfare':'xx','coordinate':['longitude','latitude']}
   * 失败：{'err':'xx'}
   * */
-  static Future<Map> get curLocations async {
-    var locationAlways = await PermissionHandler()
-        .checkPermissionStatus(PermissionGroup.locationAlways);
-    var locationWhenInUse = await PermissionHandler()
-        .checkPermissionStatus(PermissionGroup.locationWhenInUse);
+  static Future<Map?> get curLocations async {
+    var locationAlways = await Permission.locationAlways.status;
+    var locationWhenInUse = await Permission.locationWhenInUse.status;
     if (locationAlways != PermissionStatus.granted &&
         locationWhenInUse != PermissionStatus.granted) {
       return null;
     }
 
-    Map locations = await _channel.invokeMethod('getCurLocations');
+    Map? locations = await _channel.invokeMethod('getCurLocations');
     return locations;
   }
 
@@ -39,17 +37,15 @@ class FltLocation {
   *             'subThoroughfare':'xx','coordinate':['longitude','latitude']}
   * 失败：{'err':'xx'}
   * */
-  static Future<Map> get getLocation async {
-    var locationAlways = await PermissionHandler()
-        .checkPermissionStatus(PermissionGroup.locationAlways);
-    var locationWhenInUse = await PermissionHandler()
-        .checkPermissionStatus(PermissionGroup.locationWhenInUse);
+  static Future<Map?> get getLocation async {
+    var locationAlways = await Permission.locationAlways.status;
+    var locationWhenInUse = await Permission.locationWhenInUse.status;
     if (locationAlways != PermissionStatus.granted &&
         locationWhenInUse != PermissionStatus.granted) {
       return null;
     }
 
-    Map locations = await _channel.invokeMethod('getLocation');
+    Map? locations = await _channel.invokeMethod('getLocation');
     return locations;
   }
 
@@ -63,22 +59,20 @@ class FltLocation {
   *             'subThoroughfare':'xx','coordinate':['longitude','latitude']}
   * 失败：{'err':'xx'}
   * */
-  static Future<Map> searchLocation(Map argsMap) async {
-    var locationAlways = await PermissionHandler()
-        .checkPermissionStatus(PermissionGroup.locationAlways);
-    var locationWhenInUse = await PermissionHandler()
-        .checkPermissionStatus(PermissionGroup.locationWhenInUse);
+  static Future<Map?> searchLocation(Map argsMap) async {
+    var locationAlways = await Permission.locationAlways.status;
+    var locationWhenInUse = await Permission.locationWhenInUse.status;
     if (locationAlways != PermissionStatus.granted &&
         locationWhenInUse != PermissionStatus.granted) {
       return null;
     }
 
-    Map locations = await _channel.invokeMethod('searchLocation', argsMap);
+    Map? locations = await _channel.invokeMethod('searchLocation', argsMap);
     return locations;
   }
 
-  static Future<Map> getPlaceDetail(Map argsMap) async {
-    Map locations = await _channel.invokeMethod('getplacedetail', argsMap);
+  static Future<Map?> getPlaceDetail(Map argsMap) async {
+    Map? locations = await _channel.invokeMethod('getplacedetail', argsMap);
     return locations;
   }
 }

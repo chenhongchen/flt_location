@@ -13,9 +13,14 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    _request();
+  }
+
+  _request( )async{
     try {
-      PermissionHandler()
-          .requestPermissions([PermissionGroup.locationWhenInUse]);
+      var bb = Permission.locationAlways;
+      var a = await bb.request();
+      print('$a');
     } catch (e) {}
   }
 
