@@ -13,14 +13,12 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _request();
+    _requestLocationAlways();
   }
 
-  _request( )async{
+  _requestLocationAlways() async {
     try {
-      var bb = Permission.locationAlways;
-      var a = await bb.request();
-      print('$a');
+      await Permission.locationAlways.request();
     } catch (e) {}
   }
 
