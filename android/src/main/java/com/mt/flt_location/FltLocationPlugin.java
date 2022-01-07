@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
@@ -239,6 +240,7 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
             return;
         }
         getLocation(mActivity)
+                .timeout(3, TimeUnit.SECONDS)
                 .map(location -> {
                     if (null != LOC) {
                         double latitude = LOC.getLatitude();
