@@ -68,6 +68,7 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
     private static String googlePlaceKey;
     private static Activity mActivity;
     public static Location LOC = null;
+
     // This static function is optional and equivalent to onAttachedToEngine. It supports the old
     // pre-Flutter-1.12 Android projects. You are encouraged to continue supporting
     // plugin registration via this function while apps migrate to use the new Android APIs
@@ -96,9 +97,9 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
             result.success("Android " + android.os.Build.VERSION.RELEASE);
         } else if (call.method.equals("getCurLocations")) {
             getCurLocations(result);
-        } else if(call.method.equals("getLocation")){
+        } else if (call.method.equals("getLocation")) {
             getLocation(result);
-        }else if (call.method.equals("searchLocation")) {
+        } else if (call.method.equals("searchLocation")) {
             Map arg = call.arguments();
             String keyWord = (String) arg.get("key");
             searchLocation(keyWord, result);
@@ -118,62 +119,46 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
             Locale locale = new Locale("en"); // <---- your target language
             Locale.setDefault(locale);
             config.locale = locale;
-            mActivity.getResources().updateConfiguration(config,
-                    mActivity.getResources().getDisplayMetrics());
+            mActivity.getResources().updateConfiguration(config, mActivity.getResources().getDisplayMetrics());
             // Create a new Places client instance.
             PlacesClient placesClient = Places.createClient(mActivity);
-            List<Place.Field> placeFields = Arrays.asList(
-                    Place.Field.ADDRESS,
-                    Place.Field.ID,
-                    Place.Field.LAT_LNG,
-                    Place.Field.NAME
-            );
+            List<Place.Field> placeFields = Arrays.asList(Place.Field.ADDRESS, Place.Field.ID, Place.Field.LAT_LNG, Place.Field.NAME);
             FetchPlaceRequest request = FetchPlaceRequest.newInstance(placeId, placeFields);
             placesClient.fetchPlace(request).addOnSuccessListener((response) -> {
                 Place responseplace = response.getPlace();
                 PlaceRes place = new PlaceRes();
                 place.setName(responseplace.getName());
                 place.setThoroughfare(responseplace.getAddress());
-                double[] latlng = {responseplace.getLatLng().longitude,responseplace.getLatLng().latitude};
+                double[] latlng = {responseplace.getLatLng().longitude, responseplace.getLatLng().latitude};
                 place.setCoordinate(latlng);
                 emitter.onNext(getItem(place, null));
             }).addOnFailureListener((exception) -> {
                 emitter.onError(exception);
             });
-        }, BackpressureStrategy.LATEST)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(comSubscriber(result));
+        }, BackpressureStrategy.LATEST).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(comSubscriber(result));
     }
 
     private void searchLocation(String keyWord, Result result) {
         if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION
-                    , Manifest.permission.ACCESS_FINE_LOCATION}, 100000);
+            ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 100000);
             result.success(null);
             return;
         }
 
         Flowable.create((FlowableOnSubscribe<List<PlaceRes>>) emitter -> {
-            RectangularBounds bounds = RectangularBounds.newInstance(
-                    new LatLng(-43.577054, 112.372762), //dummy lat/lng
+            RectangularBounds bounds = RectangularBounds.newInstance(new LatLng(-43.577054, 112.372762), //dummy lat/lng
                     new LatLng(-11.914561, 154.239446));
             Configuration config = mActivity.getResources().getConfiguration();
             Locale locale = new Locale("en"); // <---- your target language
             Locale.setDefault(locale);
             config.locale = locale;
-            mActivity.getResources().updateConfiguration(config,
-                    mActivity.getResources().getDisplayMetrics());
+            mActivity.getResources().updateConfiguration(config, mActivity.getResources().getDisplayMetrics());
             // Create a new Places client instance.
             PlacesClient placesClient = Places.createClient(mActivity);
             AutocompleteSessionToken token = AutocompleteSessionToken.newInstance();
-            FindAutocompletePredictionsRequest request = FindAutocompletePredictionsRequest.builder()
-                    .setLocationRestriction(bounds)
+            FindAutocompletePredictionsRequest request = FindAutocompletePredictionsRequest.builder().setLocationRestriction(bounds)
                     //.setCountry("us")
-                    .setTypeFilter(TypeFilter.ADDRESS)
-                    .setSessionToken(token)
-                    .setQuery(keyWord)
-                    .build();
+                    .setTypeFilter(TypeFilter.ADDRESS).setSessionToken(token).setQuery(keyWord).build();
             placesClient.findAutocompletePredictions(request).addOnSuccessListener(response -> {
                 List<PlaceRes> placeResList = new ArrayList<>();
                 for (AutocompletePrediction prediction : response.getAutocompletePredictions()) {
@@ -189,32 +174,26 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
             }).addOnFailureListener((exception) -> {
                 emitter.onError(exception);
             });
-        }, BackpressureStrategy.LATEST)
-                .map((Function<List<PlaceRes>, Map>) placeRes -> {
-                    Map<String, Object> resMap = new HashMap<>();
-                    Map<String, Object> valuesMap = new HashMap<>();
-                    LocationRes locationRes = null;
-                    if (placeRes.size() > 0) {
-                        List<Map<String, Object>> locations = new ArrayList<>();
-                        for (PlaceRes place : placeRes) {
-                            locations.add(getItem(place, locationRes));
-                        }
-                        valuesMap.put("locations", locations);
-                    }
-                    resMap.put("value", valuesMap);
-                    return resMap;
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(comSubscriber(result));
+        }, BackpressureStrategy.LATEST).map((Function<List<PlaceRes>, Map>) placeRes -> {
+            Map<String, Object> resMap = new HashMap<>();
+            Map<String, Object> valuesMap = new HashMap<>();
+            LocationRes locationRes = null;
+            if (placeRes.size() > 0) {
+                List<Map<String, Object>> locations = new ArrayList<>();
+                for (PlaceRes place : placeRes) {
+                    locations.add(getItem(place, locationRes));
+                }
+                valuesMap.put("locations", locations);
+            }
+            resMap.put("value", valuesMap);
+            return resMap;
+        }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(comSubscriber(result));
     }
 
 
     private LocationRes transformationLocation(Context context, double[] latlng) throws IOException {
         Geocoder geoCoder = new Geocoder(context, Locale.ENGLISH);
-        List<Address> addresses = geoCoder.getFromLocation(
-                latlng[0], latlng[1],
-                1);
+        List<Address> addresses = geoCoder.getFromLocation(latlng[0], latlng[1], 1);
         LocationRes location = null;
         if (null != addresses && addresses.size() > 0) {
             Address address = addresses.get(0);
@@ -225,51 +204,49 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
             location.setLocality(address.getLocality());
             location.setSubLocality(address.getSubLocality());
             location.setSubThoroughfare(address.getFeatureName());
+            location.setPostalCode(address.getPostalCode());
         }
         return location;
     }
+
     private void getLocation(Result result) {
         if (null == mActivity) {
             result.success(null);
             return;
         }
         if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION
-                    , Manifest.permission.ACCESS_FINE_LOCATION}, 100000);
+            ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 100000);
             result.success(null);
             return;
         }
-        getLocation(mActivity)
-                .timeout(3, TimeUnit.SECONDS)
-                .map(location -> {
-                    if (null != LOC) {
-                        double latitude = LOC.getLatitude();
-                        double longitude = LOC.getLongitude();
-                        double[] latlng = {latitude, longitude};
-                        LocationRes locationRes=transformationLocation(mActivity, latlng);
-                        Map<String, Object> item = new HashMap<>();
-                        item.put("coordinate", latlng);
-                        if (null != locationRes) {
-                            item.put("locality", locationRes.getLocality());
-                            item.put("country", locationRes.getCountry());
-                            item.put("subLocality", locationRes.getSubLocality());
-                            item.put("subThoroughfare", locationRes.getSubThoroughfare());
-                            item.put("countryCode", locationRes.getCountryCode());
-                            item.put("province", locationRes.getProvince());
-                        }
-                        Map<String, Object> resMap = new HashMap<>();
-                        Map<String, Object> valuesMap = new HashMap<>();
-                        valuesMap.put("locations", item);
-                        resMap.put("value", valuesMap);
-                        return resMap;
-                    }else{
-                        return null;
-                    }
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(comSubscriber(result));
+        getLocation(mActivity).timeout(3, TimeUnit.SECONDS).map(location -> {
+            if (null != LOC) {
+                double latitude = LOC.getLatitude();
+                double longitude = LOC.getLongitude();
+                double[] latlng = {longitude, latitude};
+                LocationRes locationRes = transformationLocation(mActivity, latlng);
+                Map<String, Object> item = new HashMap<>();
+                item.put("coordinate", latlng);
+                if (null != locationRes) {
+                    item.put("locality", locationRes.getLocality());
+                    item.put("country", locationRes.getCountry());
+                    item.put("subLocality", locationRes.getSubLocality());
+                    item.put("subThoroughfare", locationRes.getSubThoroughfare());
+                    item.put("countryCode", locationRes.getCountryCode());
+                    item.put("province", locationRes.getProvince());
+                    item.put("postalCode", locationRes.getPostalCode());
+                }
+                Map<String, Object> resMap = new HashMap<>();
+                Map<String, Object> valuesMap = new HashMap<>();
+                valuesMap.put("locations", item);
+                resMap.put("value", valuesMap);
+                return resMap;
+            } else {
+                return null;
+            }
+        }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(comSubscriber(result));
     }
+
     public static Flowable<Location> getLocation(Context context) {
         LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         Criteria criteria = new Criteria();
@@ -282,7 +259,7 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
         String provider = locationManager.getBestProvider(criteria, true); //获取定位器类别
         if (provider == null) {
 
-            return Flowable.just(null==LOC?new Location(""):LOC);
+            return Flowable.just(null == LOC ? new Location("") : LOC);
         }
         LOC = locationManager.getLastKnownLocation(provider);
         Flowable<Location> locationFlowable = Flowable.create(emitter -> {
@@ -316,33 +293,26 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
         return locationFlowable.subscribeOn(Schedulers.io());
 
     }
+
     private void getCurLocations(Result result) {
         if (null == mActivity) {
             result.success(null);
             return;
         }
         if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION
-                    , Manifest.permission.ACCESS_FINE_LOCATION}, 100000);
+            ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 100000);
             result.success(null);
             return;
         }
         Flowable.create((FlowableOnSubscribe<List<PlaceRes>>) emitter -> {
-            List<Place.Field> placeFields = Arrays.asList(
-                    Place.Field.ADDRESS,
-                    Place.Field.ID,
-                    Place.Field.LAT_LNG,
-                    Place.Field.NAME
-            );
+            List<Place.Field> placeFields = Arrays.asList(Place.Field.ADDRESS, Place.Field.ID, Place.Field.LAT_LNG, Place.Field.NAME);
             Configuration config = mActivity.getResources().getConfiguration();
             Locale locale = new Locale("en"); // <---- your target language
             Locale.setDefault(locale);
             config.locale = locale;
-            mActivity.getResources().updateConfiguration(config,
-                    mActivity.getResources().getDisplayMetrics());
+            mActivity.getResources().updateConfiguration(config, mActivity.getResources().getDisplayMetrics());
             PlacesClient placesClient = Places.createClient(mActivity);
-            FindCurrentPlaceRequest findCurrentPlaceRequest =
-                    FindCurrentPlaceRequest.newInstance(placeFields);
+            FindCurrentPlaceRequest findCurrentPlaceRequest = FindCurrentPlaceRequest.newInstance(placeFields);
             Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(findCurrentPlaceRequest);
             placeResponse.addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
@@ -352,7 +322,7 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
                         PlaceRes place = new PlaceRes();
                         place.setName(placeLikelihood.getPlace().getName());
                         place.setThoroughfare(placeLikelihood.getPlace().getAddress());
-                        double[] latlng = {placeLikelihood.getPlace().getLatLng().longitude,placeLikelihood.getPlace().getLatLng().latitude};
+                        double[] latlng = {placeLikelihood.getPlace().getLatLng().longitude, placeLikelihood.getPlace().getLatLng().latitude};
                         place.setCoordinate(latlng);
                         placeResList.add(place);
                     }
@@ -363,31 +333,27 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
                     emitter.onError(exception);
                 }
             });
-        }, BackpressureStrategy.LATEST)
-                .map((Function<List<PlaceRes>, Map>) placeRes -> {
-                    Map<String, Object> resMap = new HashMap<>();
-                    Map<String, Object> valuesMap = new HashMap<>();
-                    LocationRes locationRes = null;
-                    if (placeRes.size() > 0) {
-                        locationRes = transformationLocation(mActivity, placeRes.get(0).getCoordinate());
-                        PlaceRes current = placeRes.get(0);
-                        Map<String, Object> item = getItem(current, locationRes);
-                        valuesMap.put("curLocation", item);
-                        placeRes.remove(0);
-                    }
-                    if (placeRes.size() > 0) {
-                        List<Map<String, Object>> locations = new ArrayList<>();
-                        for (PlaceRes place : placeRes) {
-                            locations.add(getItem(place, locationRes));
-                        }
-                        valuesMap.put("locations", locations);
-                    }
-                    resMap.put("value", valuesMap);
-                    return resMap;
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(comSubscriber(result));
+        }, BackpressureStrategy.LATEST).map((Function<List<PlaceRes>, Map>) placeRes -> {
+            Map<String, Object> resMap = new HashMap<>();
+            Map<String, Object> valuesMap = new HashMap<>();
+            LocationRes locationRes = null;
+            if (placeRes.size() > 0) {
+                locationRes = transformationLocation(mActivity, placeRes.get(0).getCoordinate());
+                PlaceRes current = placeRes.get(0);
+                Map<String, Object> item = getItem(current, locationRes);
+                valuesMap.put("curLocation", item);
+                placeRes.remove(0);
+            }
+            if (placeRes.size() > 0) {
+                List<Map<String, Object>> locations = new ArrayList<>();
+                for (PlaceRes place : placeRes) {
+                    locations.add(getItem(place, locationRes));
+                }
+                valuesMap.put("locations", locations);
+            }
+            resMap.put("value", valuesMap);
+            return resMap;
+        }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(comSubscriber(result));
     }
 
     private Subscriber<Map> comSubscriber(Result result) {
@@ -428,6 +394,7 @@ public class FltLocationPlugin implements FlutterPlugin, MethodCallHandler, Acti
             item.put("subThoroughfare", locationRes.getSubThoroughfare());
             item.put("countryCode", locationRes.getCountryCode());
             item.put("province", locationRes.getProvince());
+            item.put("postalCode", locationRes.getPostalCode());
         }
         return item;
     }

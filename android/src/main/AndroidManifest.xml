@@ -2,4 +2,5 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.mt.flt_location">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 </manifest>

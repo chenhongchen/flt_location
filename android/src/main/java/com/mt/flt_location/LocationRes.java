@@ -8,6 +8,9 @@ public class LocationRes {
     private String countryCode;
     private String province;
 
+    private String postalCode;
+
+
     public String getLocality() {
         return locality;
     }
@@ -54,5 +57,13 @@ public class LocationRes {
 
     public void setProvince(String province) {
         this.province = province;
+    }
+
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
     }
 }
