@@ -192,11 +192,17 @@
         dictM[@"name"] = placemark.name; // 地点
         dictM[@"countryCode"] = placemark.ISOcountryCode.uppercaseString; // 国家码
         dictM[@"country"] = placemark.country; // 国家
+        // 表示该地标所在的行政区划，通常是省、自治区或直辖市。
+        // 在中国大陆地区，该属性通常表示该地标所在的省份
         dictM[@"province"] = placemark.administrativeArea; // 省
+        // 表示该地标所在的次级行政区划，通常是县或区。
+        // 在中国大陆地区，该属性通常表示该地标所在的市辖区或县级市
+        dictM[@"subAdministrativeArea"] = placemark.subAdministrativeArea;
         dictM[@"locality"] = placemark.locality; // 城市
         dictM[@"subLocality"] = placemark.subLocality; // 区
         dictM[@"thoroughfare"] = placemark.thoroughfare; // 街道
         dictM[@"subThoroughfare"] = placemark.subThoroughfare; // 门牌号
+        dictM[@"postalCode"] = placemark.postalCode; // 邮编
         if (CLLocationCoordinate2DIsValid(placemark.location.coordinate)) {
             NSString *longi = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.longitude)];
             NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];
@@ -227,11 +233,17 @@
         dictM[@"name"] = placemark.name; // 地点
         dictM[@"countryCode"] = placemark.ISOcountryCode.uppercaseString; // 国家码
         dictM[@"country"] = placemark.country; // 国家
+        // 表示该地标所在的行政区划，通常是省、自治区或直辖市。
+        // 在中国大陆地区，该属性通常表示该地标所在的省份
         dictM[@"province"] = placemark.administrativeArea; // 省
+        // 表示该地标所在的次级行政区划，通常是县或区。
+        // 在中国大陆地区，该属性通常表示该地标所在的市辖区或县级市
+        dictM[@"subAdministrativeArea"] = placemark.subAdministrativeArea;
         dictM[@"locality"] = placemark.locality; // 城市
         dictM[@"subLocality"] = placemark.subLocality; // 区
         dictM[@"thoroughfare"] = placemark.thoroughfare; // 街道
         dictM[@"subThoroughfare"] = placemark.subThoroughfare; // 门牌号
+        dictM[@"postalCode"] = placemark.postalCode; // 邮编
         if (CLLocationCoordinate2DIsValid(placemark.location.coordinate)) {
             NSString *longi = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.longitude)];
             NSString *lati = [NSString stringWithFormat:@"%@", @(placemark.location.coordinate.latitude)];

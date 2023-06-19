@@ -11,9 +11,9 @@ class FltLocation {
   * 当前位置及周边附近
   * return:
   * 成功： {'value' : {'locations':[location], 'curLocation':'{location}'}}
-  * 'location':{'name':'xx','countryCode':'xx','country':'xx',
+  * 'location':{'name':'xx','countryCode':'xx','country':'xx','subAdministrativeArea':xx
   *             'province':'xx','locality':'xx','subLocality':'xx','thoroughfare':'xx',
-  *             'subThoroughfare':'xx','coordinate':['longitude','latitude']}
+  *             'subThoroughfare':'xx','postalCode':xx,'coordinate':['longitude','latitude']}
   * 失败：{'err':'xx'}
   * */
   static Future<Map?> get curLocations async {
@@ -32,9 +32,9 @@ class FltLocation {
   * 获取当前位置
   * return:
   * 成功： {'value' : {'locations':location}
-  * 'location':{'name':'xx','countryCode':'xx','country':'xx',
+  * 'location':{'name':'xx','countryCode':'xx','country':'xx','subAdministrativeArea':xx
   *             'province':'xx','locality':'xx','subLocality':'xx','thoroughfare':'xx',
-  *             'subThoroughfare':'xx','coordinate':['longitude','latitude']}
+  *             'subThoroughfare':'xx','postalCode':xx,'coordinate':['longitude','latitude']}
   * 失败：{'err':'xx'}
   * */
   static Future<Map?> get getLocation async {
@@ -54,9 +54,9 @@ class FltLocation {
   * argsMap: 要搜索的字符串，格式{'key':'xxxx'}
   * return:
   * 成功： {'value' : {'locations':[location]}}
-  * 'location':{'name':'xx','countryCode':'xx','country':'xx',
+  * 'location':{'name':'xx','countryCode':'xx','country':'xx','subAdministrativeArea':xx
   *             'province':'xx','locality':'xx','subLocality':'xx','thoroughfare':'xx',
-  *             'subThoroughfare':'xx','coordinate':['longitude','latitude']}
+  *             'subThoroughfare':'xx','postalCode':xx,'coordinate':['longitude','latitude']}
   * 失败：{'err':'xx'}
   * */
   static Future<Map?> searchLocation(Map argsMap) async {
